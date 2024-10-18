@@ -1,8 +1,9 @@
 class DiscountsController < ApplicationController
+  before_action :set_product
   before_action :set_discount, only: %i[show update destroy]
 
   def index
-    render json: Discount.all
+    render json: @product.discounts
   end
 
   def show
@@ -10,10 +11,10 @@ class DiscountsController < ApplicationController
   end
 
   def create
-    @discount = Discount.new(discount_params)
+    @discount = @product.discounts.new(discount_params)
 
     if @discount.save
-      render json: @discount, status: :created, location: @discount
+      render json: @discount, status: :created, location: product_discount_url(@product, @discount)
     else
       render json: @discount.errors, status: :unprocessable_entity
     end
@@ -33,11 +34,15 @@ class DiscountsController < ApplicationController
 
   private
 
+  def set_product
+    @product = Product.find params[:product_id]
+  end
+
   def set_discount
-    @discount = Discount.find(params[:id])
+    @discount = @product.discounts.find params[:id]
   end
 
   def discount_params
-    params.require(:discount).permit(:product_id, :min_product_count, :rate)
+    params.require(:discount).permit(:min_product_count, :rate)
   end
 end

@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
-  resources :discounts
-  resources :products, only: %i[index update]
+  resources :products, only: %i[index update] do
+    resources :discounts
+  end
 end

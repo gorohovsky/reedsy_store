@@ -2,125 +2,224 @@ require 'rails_helper'
 
 RSpec.describe '/discounts', type: :request do
   let!(:product) { Product.create!(code: 'PEN', name: 'Reedsy Pen', price: 55.01) }
-  let(:common_attributes) { { product_id: product.id, min_product_count: 2, rate: 0.1 } }
-  let(:attributes) { common_attributes }
+  let(:common_attributes) { { min_product_count: 2, rate: 0.1 } }
+  let(:attributes) { common_attributes.merge!(product_id: product.id) }
+
+  shared_context 'multiple products' do
+    let!(:product2) { Product.create!(code: 'HAT', name: 'Reedsy Hat', price: 100.12) }
+    let!(:product2_discount) { Discount.create!(attributes.merge!(product_id: product2.id)) }
+  end
+
+  shared_context 'nonexistent product' do
+    let(:requested_product) { Product.new(id: 0) }
+  end
+
+  shared_examples '"not found" response' do |model|
+    it 'responds with 404 and an error message' do
+      expect(subject.status).to eq 404
+      expect(subject.body).to include "Couldn't find #{model.name}"
+    end
+  end
 
   describe 'GET /index' do
-    let!(:discount) { Discount.create!(attributes) }
+    subject do
+      get product_discounts_url(requested_product), headers: {}, as: :json
+      response
+    end
 
-    it 'renders a successful response' do
-      get discounts_url, headers: {}, as: :json
-      expect(response.status).to eq 200
-      expect(JSON.parse(response.body)[0]).to match discount.as_json
+    describe 'success' do
+      let(:requested_product) { product }
+      let!(:discount) { Discount.create!(attributes) }
+
+      include_context 'multiple products'
+
+      it 'responds with 200 and discounts related to the specified product' do
+        expect(Discount.count).to eq 2
+        expect(subject.status).to eq 200
+
+        JSON.parse(subject.body).tap do |discounts|
+          expect(discounts.size).to eq 1
+          expect(discounts[0]).to eq discount.as_json
+        end
+      end
+    end
+
+    describe 'failure' do
+      context 'when the requested product does not exist' do
+        include_context 'nonexistent product'
+        it_behaves_like '"not found" response', Product
+      end
     end
   end
 
   describe 'GET /show' do
     let!(:discount) { Discount.create!(attributes) }
 
-    it 'renders a successful response' do
-      get discount_url(discount), as: :json
-      expect(response.status).to eq 200
-      expect(JSON.parse(response.body)).to match discount.as_json
+    subject do
+      get product_discount_url(requested_product, discount), as: :json
+      response
+    end
+
+    describe 'success' do
+      let(:requested_product) { product }
+
+      it 'responds with 200 and the requested discount' do
+        expect(subject.status).to eq 200
+        expect(JSON.parse(subject.body)).to eq discount.as_json
+      end
+    end
+
+    describe 'failure' do
+      context 'when the discount belongs to another product' do
+        include_context 'multiple products'
+        let(:requested_product) { product2 }
+        it_behaves_like '"not found" response', Discount
+      end
+
+      context 'when the requested product does not exist' do
+        include_context 'nonexistent product'
+        it_behaves_like '"not found" response', Product
+      end
     end
   end
 
   describe 'POST /create' do
+    let(:attributes) { common_attributes }
+    let(:requested_product) { product }
+
     subject do
-      post discounts_url, params: { discount: attributes }, headers: {}, as: :json
+      post product_discounts_url(requested_product), params: { discount: attributes }, headers: {}, as: :json
       response
     end
 
-    context 'with valid parameters' do
-      it 'creates a new discount' do
-        expect { subject }.to change(Discount, :count).by(1)
-      end
-
-      it 'renders a JSON response with the new discount' do
-        expect(subject.status).to eq 201
-        expect(JSON.parse(subject.body)).to match Discount.last.as_json
-      end
-    end
-
-    shared_examples 'unsuccessful discount creation' do |param|
-      context "when #{param} is not passed" do
-        it 'does not create a new discount' do
-          expect { subject }.not_to change(Discount, :count)
+    describe 'success' do
+      context 'with valid parameters' do
+        it 'creates a new discount' do
+          expect { subject }.to change(Discount, :count).by(1)
         end
 
-        it 'responds with 422 and an error message' do
-          expect(subject.status).to eq 422
-          expect(subject.content_type).to include 'application/json'
-          expect(subject.body).not_to be_empty
+        it 'responds with 201 and the new discount' do
+          expect(subject.status).to eq 201
+          Discount.last.tap do |discount|
+            expect(JSON.parse(subject.body)).to eq discount.as_json
+            expect(headers['location']).to eq product_discount_url(requested_product, discount)
+          end
         end
       end
     end
 
-    context 'with invalid parameters' do
-      %i[product_id min_product_count rate].each do |param|
-        it_behaves_like 'unsuccessful discount creation', param do
-          let(:attributes) { common_attributes.except(param) }
+    describe 'failure' do
+      shared_examples 'unsuccessful discount creation' do |param|
+        context "when #{param} is not passed" do
+          it 'does not create a new discount' do
+            expect { subject }.not_to change(Discount, :count)
+          end
+
+          it 'responds with 422 and an error message' do
+            expect(subject.status).to eq 422
+            expect(subject.body).not_to be_empty
+          end
         end
+      end
+
+      context 'with invalid parameters' do
+        %i[min_product_count rate].each do |param|
+          it_behaves_like 'unsuccessful discount creation', param do
+            let(:attributes) { common_attributes.except(param) }
+          end
+        end
+      end
+
+      context 'when the requested product does not exist' do
+        include_context 'nonexistent product'
+        it_behaves_like '"not found" response', Product
       end
     end
   end
 
   describe 'PUT /update' do
+    let(:requested_product) { product }
     let!(:discount) { Discount.create!(attributes) }
 
     subject do
-      put discount_url(discount), params: { discount: new_attributes }, headers: {}, as: :json
+      put product_discount_url(requested_product, discount), params: { discount: new_attributes }, headers: {}, as: :json
       response
     end
 
-    context 'with valid parameters' do
-      let(:new_attributes) { { min_product_count: 5, rate: 0.15 } }
+    describe 'success' do
+      context 'with valid parameters' do
+        let(:new_attributes) { { min_product_count: 5, rate: 0.15 } }
 
-      it 'responds with 200 and the updated discount' do
-        expect(subject.status).to eq 200
-        expect(JSON.parse(subject.body)).to match discount.reload.as_json
+        it 'responds with 200 and the updated discount' do
+          expect(subject.status).to eq 200
+          expect(JSON.parse(subject.body)).to match discount.reload.as_json
+        end
       end
     end
 
-    context 'with invalid parameters' do
-      context 'when parameters are not passed' do
-        let(:new_attributes) { {} }
+    describe 'failure' do
+      let(:new_attributes) { {} }
 
-        it 'responds with 400 and an error message' do
-          expect(subject.status).to eq 400
-          expect(subject.body).to include 'param is missing'
+      context 'with invalid parameters' do
+        context 'when no parameters passed' do
+          it 'responds with 400 and an error message' do
+            expect(subject.status).to eq 400
+            expect(subject.body).to include 'param is missing'
+          end
         end
-      end
 
-      shared_examples 'unsuccessful product update' do |param, value|
-        let(:new_attributes) { { param => value } }
+        context 'when parameters contain wrong values' do
+          shared_examples 'unsuccessful product update' do |param, value|
+            let(:new_attributes) { { param => value } }
 
-        it 'responds with 422 and an error message' do
-          expect(subject.status).to eq 422
-          expect(subject.body).to include 'Must be a number'
-          expect(subject.content_type).to include 'application/json'
+            it 'responds with 422 and an error message' do
+              expect(subject.status).to eq 422
+              expect(subject.body).to include 'Must be a number'
+            end
+          end
+
+          %i[min_product_count rate].each do |param|
+            ['', 'zero', nil, 0].each do |value|
+              it_behaves_like 'unsuccessful product update', param, value
+            end
+          end
         end
-      end
 
-      %i[min_product_count rate].each do |param|
-        ['', 'zero', nil, 0].each do |value|
-          it_behaves_like 'unsuccessful product update', param, value
+        context 'when the discount belongs to another product' do
+          include_context 'multiple products'
+          let(:requested_product) { product2 }
+          it_behaves_like '"not found" response', Discount
+        end
+
+        context 'when the requested product does not exist' do
+          include_context 'nonexistent product'
+          it_behaves_like '"not found" response', Product
         end
       end
     end
   end
 
   describe 'DELETE /destroy' do
+    let(:requested_product) { product }
     let!(:discount) { Discount.create!(attributes) }
 
     subject do
-      delete discount_url(discount), headers: {}, as: :json
+      delete product_discount_url(requested_product, discount), headers: {}, as: :json
       response
     end
 
-    it 'destroys the requested discount and responds with 200' do
-      expect { subject }.to change(Discount, :count).by(-1)
-      expect(subject.status).to eq 204
+    describe 'success' do
+      it 'destroys the requested discount and responds with 200' do
+        expect { subject }.to change(Discount, :count).by(-1)
+        expect(subject.status).to eq 204
+      end
+    end
+
+    describe 'failure' do
+      context 'when the requested product does not exist' do
+        include_context 'nonexistent product'
+        it_behaves_like '"not found" response', Product
+      end
     end
   end
 end
