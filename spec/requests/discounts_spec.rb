@@ -22,6 +22,8 @@ RSpec.describe '/discounts', type: :request do
     end
   end
 
+  after { FactoryBot.rewind_sequences }
+
   describe 'GET /index' do
     subject do
       get product_discounts_url(requested_product), headers: {}, as: :json

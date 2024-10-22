@@ -5,10 +5,10 @@ RSpec.describe ProductSet do
   let(:product_count) { 11 }
   let(:instance) { described_class.new(product, product_count) }
 
+  after { FactoryBot.rewind_sequences }
+
   context 'when a suitable discount for the specified number of products exists' do
     let!(:discounts) { create_list(:discount, 3, product: product) }
-
-    after { FactoryBot.rewind_sequences }
 
     describe '#discount_rate' do
       it 'returns its value as a decimal' do
