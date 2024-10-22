@@ -10,13 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_10_22_100924) do
+ActiveRecord::Schema[7.2].define(version: 2024_10_22_103643) do
   create_table "discounts", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.integer "min_product_count", null: false
     t.decimal "rate", precision: 5, scale: 4, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["product_id", "min_product_count"], name: "index_discounts_on_product_id_and_min_product_count", unique: true
     t.index ["product_id"], name: "index_discounts_on_product_id"
   end
 
