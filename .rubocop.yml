@@ -1,10 +1,33 @@
-# Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
-
+AllCops:
+  NewCops: enable
+  Exclude:
+    - 'bin/**/*'
+    - 'config.ru'
+    - 'config/**/*'
+    - 'db/schema.rb'
+    - 'Rakefile'
 Style/StringLiterals:
   EnforcedStyle: single_quotes
   Exclude:
-    - 'config/**/*'
+    - 'db/**/*'
+    - 'spec/rails_helper.rb'
     - 'Gemfile'
 Layout/SpaceInsideArrayLiteralBrackets:
   Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 125
+
+Style/BlockComments:
+  Exclude:
+    - 'spec/spec_helper.rb'
