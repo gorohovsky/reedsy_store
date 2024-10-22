@@ -14,8 +14,20 @@ products = [
   { code: 'HOODIE', name: 'Reedsy Hoodie', price: 20 }
 ]
 
-products.each do |product|
+mug, tshirt = products.map do |product|
   Product.find_or_create_by!(product.except(:price)) do |p|
     p.price = product[:price]
+  end
+end
+
+if ENV['SEED_DISCOUNTS']
+  tshirt.discounts.find_or_create_by!(min_product_count: 3) do |d|
+    d.rate = 0.3
+  end
+
+  (10..150).step(10).each do |min_product_count|
+    mug.discounts.find_or_create_by!(min_product_count:) do |d|
+      d.rate = (min_product_count * 2.0) / 1000
+    end
   end
 end
