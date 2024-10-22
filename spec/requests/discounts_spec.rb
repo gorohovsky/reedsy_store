@@ -1,17 +1,18 @@
 require 'rails_helper'
 
 RSpec.describe '/discounts', type: :request do
-  let!(:product) { Product.create!(code: 'PEN', name: 'Reedsy Pen', price: 55.01) }
-  let(:common_attributes) { { min_product_count: 2, rate: 0.1 } }
-  let(:attributes) { common_attributes.merge!(product_id: product.id) }
+  let!(:product) { create(:product, code: 'PEN') }
+
+  let(:common_attributes) { attributes_for(:discount) }
+  let(:attributes) { { **common_attributes, product: product } }
 
   shared_context 'multiple products' do
-    let!(:product2) { Product.create!(code: 'HAT', name: 'Reedsy Hat', price: 100.12) }
-    let!(:product2_discount) { Discount.create!(attributes.merge!(product_id: product2.id)) }
+    let!(:product2) { create(:product, code: 'HAT') }
+    let!(:product2_discount) { create(:discount, **common_attributes, product: product2) }
   end
 
   shared_context 'nonexistent product' do
-    let(:requested_product) { Product.new(id: 0) }
+    let(:requested_product) { build(:product, id: 0) }
   end
 
   shared_examples '"not found" response' do |model|
@@ -29,7 +30,7 @@ RSpec.describe '/discounts', type: :request do
 
     describe 'success' do
       let(:requested_product) { product }
-      let!(:discount) { Discount.create!(attributes) }
+      let!(:discount) { create(:discount, attributes) }
 
       include_context 'multiple products'
 
@@ -53,7 +54,7 @@ RSpec.describe '/discounts', type: :request do
   end
 
   describe 'GET /show' do
-    let!(:discount) { Discount.create!(attributes) }
+    let!(:discount) { create(:discount, attributes) }
 
     subject do
       get product_discount_url(requested_product, discount), as: :json
@@ -139,7 +140,7 @@ RSpec.describe '/discounts', type: :request do
 
   describe 'PUT /update' do
     let(:requested_product) { product }
-    let!(:discount) { Discount.create!(attributes) }
+    let!(:discount) { create(:discount, attributes) }
 
     subject do
       put product_discount_url(requested_product, discount), params: { discount: new_attributes }, headers: {}, as: :json
@@ -150,9 +151,14 @@ RSpec.describe '/discounts', type: :request do
       context 'with valid parameters' do
         let(:new_attributes) { { min_product_count: 5, rate: 0.15 } }
 
+        it 'updates the discount' do
+          subject
+          expect(discount.reload.as_json).to include new_attributes.as_json
+        end
+
         it 'responds with 200 and the updated discount' do
           expect(subject.status).to eq 200
-          expect(JSON.parse(subject.body)).to match discount.reload.as_json
+          expect(JSON.parse(subject.body)).to eq discount.reload.as_json
         end
       end
     end
@@ -201,7 +207,7 @@ RSpec.describe '/discounts', type: :request do
 
   describe 'DELETE /destroy' do
     let(:requested_product) { product }
-    let!(:discount) { Discount.create!(attributes) }
+    let!(:discount) { create(:discount, attributes) }
 
     subject do
       delete product_discount_url(requested_product, discount), headers: {}, as: :json

@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe '/products', type: :request do
   let(:attributes) { { code: 'PEN', name: 'Reedsy Pen', price: 55.01 } }
-  let!(:product) { Product.create! attributes }
+  let!(:product) { create(:product, attributes) }
 
   describe 'GET /index' do
     subject do
@@ -12,7 +12,7 @@ RSpec.describe '/products', type: :request do
 
     it 'renders a successful response' do
       expect(subject.status).to eq 200
-      expect(JSON.parse(subject.body)[0]).to match product.as_json
+      expect(JSON.parse(subject.body)[0]).to eq product.as_json
     end
   end
 
@@ -31,7 +31,7 @@ RSpec.describe '/products', type: :request do
 
       it 'renders a JSON response with the product' do
         expect(subject.status).to eq 200
-        expect(JSON.parse(subject.body)).to match product.reload.as_json
+        expect(JSON.parse(subject.body)).to eq product.reload.as_json
       end
     end
 
@@ -46,8 +46,11 @@ RSpec.describe '/products', type: :request do
 
       it 'ignores them' do
         subject
-        expect(product.reload.code).to eq attributes[:code]
-        expect(product.name).to eq attributes[:name]
+        product.reload.tap do |updated_product|
+          expect(updated_product.code).to eq attributes[:code]
+          expect(updated_product.name).to eq attributes[:name]
+          expect(updated_product.price).to eq new_attributes[:price]
+        end
       end
 
       it_behaves_like 'successful product update'
