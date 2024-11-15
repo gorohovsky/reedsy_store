@@ -1,6 +1,6 @@
 # Project Overview
 
-This project was developed as a response to an evaluation task from Reedsy: [Reedsy Challenge](https://github.com/reedsy/challenges/blob/main/ruby-on-rails-engineer-v2.md)
+This project was developed as a response to an evaluation task from Reedsy: [Reedsy Challenge](ruby-on-rails-engineer-v2.md)
 
 ## Prerequisites
 
