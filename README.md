@@ -54,7 +54,7 @@ Now you should be all set to run the Rails server with `rails s` or use RSpec.
 
 - **Update a product:**
   ```bash
-  curl --location --globoff --request PUT 'localhost:3000/products/1?product[price]=15.7' \
+  curl --location --globoff --request PUT 'localhost:3000/products/1?product[price]=1570' \
   --header 'Accept: application/json'
   ```
 
