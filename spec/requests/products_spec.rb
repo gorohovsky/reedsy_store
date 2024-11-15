@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe '/products', type: :request do
-  let(:attributes) { { code: 'PEN', name: 'Reedsy Pen', price: 55.01 } }
+  let(:attributes) { { code: 'PEN', name: 'Reedsy Pen', price: 5501 } }
   let!(:product) { create(:product, attributes) }
 
   describe 'GET /index' do
@@ -36,13 +36,13 @@ RSpec.describe '/products', type: :request do
     end
 
     context 'with valid parameters' do
-      let(:price) { 30.67 }
+      let(:price) { 3067 }
 
       it_behaves_like 'successful product update'
     end
 
     context 'with unpermitted parameters' do
-      let(:new_attributes) { { code: 'PNCL', name: 'Pencil', price: 75 } }
+      let(:new_attributes) { { code: 'PNCL', name: 'Pencil', price: 7507 } }
 
       it 'ignores them' do
         subject
@@ -69,12 +69,12 @@ RSpec.describe '/products', type: :request do
       shared_examples 'unsuccessful product update' do
         it 'responds with 422 and an error message' do
           expect(subject.status).to eq 422
-          expect(subject.body).to include 'Must be a number greater than 0'
+          expect(subject.body).to include 'Must be an integer greater than 0'
         end
       end
 
       context 'when price has incorrect value' do
-        ['', 'zero', nil, 0].each do |value|
+        ['', 'zero', nil, 0, 30.67].each do |value|
           it_behaves_like 'unsuccessful product update' do
             let(:price) { value }
           end

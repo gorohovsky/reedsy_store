@@ -14,7 +14,7 @@ class ProductSet
 
   def price_coefficient = 1 - discount_rate
 
-  def discount_rate = discount&.rate || 0
+  def discount_rate = discount&.rate.to_d
 
   def discount
     @product

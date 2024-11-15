@@ -9,9 +9,9 @@
 #   end
 
 products = [
-  { code: 'MUG', name: 'Reedsy Mug', price: 6 },
-  { code: 'TSHIRT', name: 'Reedsy T-shirt', price: 15 },
-  { code: 'HOODIE', name: 'Reedsy Hoodie', price: 20 }
+  { code: 'MUG', name: 'Reedsy Mug', price: 600 },
+  { code: 'TSHIRT', name: 'Reedsy T-shirt', price: 1500 },
+  { code: 'HOODIE', name: 'Reedsy Hoodie', price: 2000 }
 ]
 
 mug, tshirt = products.map do |product|

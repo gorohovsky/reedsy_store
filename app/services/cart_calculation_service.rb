@@ -12,7 +12,7 @@ class CartCalculationService
       total += set.discounted_price
     end
 
-    { products: processed_products, total: total }
+    { products: processed_products, total: format_total(total) }
   end
 
   private
@@ -23,5 +23,9 @@ class CartCalculationService
 
   def products
     Product.where(code: @cart_params.keys).eager_load(:discounts)
+  end
+
+  def format_total(total)
+    total.round / 100.0
   end
 end

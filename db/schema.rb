@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_10_22_103643) do
+ActiveRecord::Schema[7.2].define(version: 2024_11_14_113305) do
   create_table "discounts", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "product_id", null: false
     t.integer "min_product_count", null: false
@@ -24,7 +24,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_10_22_103643) do
   create_table "products", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.string "code", limit: 10, null: false
     t.string "name", null: false
-    t.decimal "price", precision: 5, scale: 2, null: false
+    t.integer "price", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_products_on_code", unique: true

@@ -14,7 +14,7 @@ RSpec.describe CartCalculationService do
     shared_context 'products are found' do
       let!(:products) { codes_to_be_found.map { |code| create(:product, code:) } }
       let(:doubles) do
-        products.map { |product| double(code: product.code, product_count: cart_params[product.code], discounted_price: 5) }
+        products.map { |product| double(code: product.code, product_count: cart_params[product.code], discounted_price: 500.to_d) }
       end
 
       before do
